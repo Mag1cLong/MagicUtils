@@ -1,4 +1,4 @@
-package date;
+package indi.jcl.magicutils.util.date;
 
 public enum Week {
 

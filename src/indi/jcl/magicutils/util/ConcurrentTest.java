@@ -1,3 +1,5 @@
+package indi.jcl.magicutils.util;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
