@@ -8,12 +8,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 /**
- * ²¢·¢²âÊÔÀà
+ * å¹¶å‘æµ‹è¯•ç±»
  * Created by Magic Long on 2016/11/17.
  */
 public class ConcurrentTest {
-    private static int thread_num = 10;// ²¢·¢Êı
-    private static int client_num = 200;// ÇëÇó×ÜÊı
+    private static int thread_num = 10;// å¹¶å‘æ•°
+    private static int client_num = 200;// è¯·æ±‚æ€»æ•°
     private static long total = 0;
     private  static List<Long> record = new ArrayList<>();
 
@@ -22,14 +22,14 @@ public class ConcurrentTest {
     public static void main(String[] args) throws Exception {
         long start = System.currentTimeMillis();
         ExecutorService exec = Executors.newCachedThreadPool();
-        // thread_num¸öÏß³Ì¿ÉÒÔÍ¬Ê±·ÃÎÊ
+        // thread_numä¸ªçº¿ç¨‹å¯ä»¥åŒæ—¶è®¿é—®
         final Semaphore semp = new Semaphore(thread_num);
-        // Ä£Äâclient_num¸ö¿Í»§¶Ë·ÃÎÊ
+        // æ¨¡æ‹Ÿclient_numä¸ªå®¢æˆ·ç«¯è®¿é—®
         for (int index = 0; index < client_num; index++) {
             exec.execute(new TaskThread(semp));
         }
         long timeSpend = System.currentTimeMillis() - start;
-        // ÍË³öÏß³Ì³Ø
+        // é€€å‡ºçº¿ç¨‹æ± 
         exec.shutdown();
         while (!exec.isTerminated()) {
             try {
@@ -38,12 +38,12 @@ public class ConcurrentTest {
                 e.printStackTrace();
             }
         }
-        System.out.println("²¢·¢Êı£º"+thread_num);
-        System.out.println("ÇëÇó×ÜÊı£º"+client_num);
-        System.out.println("ÇëÇó×ÜÊ±¼ä" + total+"ms");
-        System.out.println("×îÂıÏìÓ¦Ê±¼ä" + Collections.max(record)+"ms");
-        System.out.println("×î¿ìÏìÓ¦Ê±¼ä" + Collections.min(record)+"ms");
-        System.out.println("Æ½¾ùÏìÓ¦Ê±¼ä" + (total/client_num)+"ms");
+        System.out.println("å¹¶å‘æ•°ï¼š"+thread_num);
+        System.out.println("è¯·æ±‚æ€»æ•°ï¼š"+client_num);
+        System.out.println("è¯·æ±‚æ€»æ—¶é—´" + total+"ms");
+        System.out.println("æœ€æ…¢å“åº”æ—¶é—´" + Collections.max(record)+"ms");
+        System.out.println("æœ€å¿«å“åº”æ—¶é—´" + Collections.min(record)+"ms");
+        System.out.println("å¹³å‡å“åº”æ—¶é—´" + (total/client_num)+"ms");
 
     }
 
@@ -56,7 +56,7 @@ public class ConcurrentTest {
         @Override
         public void run() {
             try {
-                // »ñÈ¡Ğí¿É
+                // è·å–è®¸å¯
                 semp.acquire();
                 long t0 = System.currentTimeMillis();
                 //do something
@@ -64,7 +64,7 @@ public class ConcurrentTest {
                 long cost = t1 - t0;
                 total += cost;
                 record.add(cost);
-                System.out.println("ºÄÊ±£º" + (t1 - t0));
+                System.out.println("è€—æ—¶ï¼š" + (t1 - t0));
 
                 semp.release();
             } catch (Exception e) {
