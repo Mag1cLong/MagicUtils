@@ -22,8 +22,8 @@ public class MybatisCodeGenerator {
     private static String ip = "";//数据库ip
     private static String port = "3306";//端口
     private static String dbName = "";//数据库实例名
-    private static String user = "root";//账号
-    private static String psd = "123456";//密码
+    private static String user = "";//账号
+    private static String psd = "";//密码
     private static String companyNameLowerCase = "";//公司名称缩写(小写)
     private static String project_url = System.getProperty("user.dir") + "\\src\\main\\java\\";//源码路径
     private static String projectNameLowerCase = getProjectName().toLowerCase();//项目名称(小写)
@@ -38,9 +38,9 @@ public class MybatisCodeGenerator {
     private static String sql = "select * from " + table + " limit 0,1";
     private static String commentSQL = "show full fields from " + table;
     private static String getTableComment = "select * from INFORMATION_SCHEMA.TABLES where  TABLE_SCHEMA = '" + dbName + "' and TABLE_NAME='" + table + "'";
-    private static String keySQL = "select COLUMN_NAME from INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA = '" + dbName + "' and table_name='" + table
+    private static String keySQL = "select COLUMN_NAME,DATA_TYPE from INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA = '" + dbName + "' and table_name='" + table
             + "' AND COLUMN_KEY='PRI'";
-    private static List<String> keyList = getKeyList(); // 主键列表,下面多次用到
+    private static List<Map<String, String>> keyMapList; // 主键列表,下面多次用到
     private static String tableComment = getTableComment();
 
 
@@ -64,17 +64,19 @@ public class MybatisCodeGenerator {
         map.put("MAP_IMPORT", "import java.util.Map;");
         map.put("longtext", "String");
         map.put("text", "String");
+        keyMapList = getKeyMapList();
     }
 
     public static void main(String[] args) throws Exception {
-        System.out.println("------代码生成开始------");
-        System.out.println("源码路径：" + project_url);
-        System.out.println("主键：" + keyList);
-        geneMbtXml();
-        geneBean();
-        geneDAO();
-        geneService();
-        System.out.println("------代码生成结束------");
+        System.out.println(Thread.currentThread().getContextClassLoader().getResource(".").getPath() );
+//        System.out.println("------代码生成开始------");
+//        System.out.println("源码路径：" + project_url);
+//        System.out.println("主键：" + keyMapList);
+//        geneMbtXml();
+//        geneBean();
+//        geneDAO();
+//        geneService();
+//        System.out.println("------代码生成结束------");
     }
 
     public static String getProjectName() {
@@ -97,12 +99,13 @@ public class MybatisCodeGenerator {
         rootEle.addAttribute("namespace", getDAOPackage() + "." + objectName + "Mapper");
 //		addResultMapElement(rootEle); // 添加 resultMap
         rootEle.addText("\r\n\t");
+        addSingleSelectElement(rootEle);
         addSelectElement(rootEle);
         rootEle.addText("\r\n\t");
         addSelectCountElement(rootEle);
         rootEle.addText("\r\n\t");
         addInsertElement(rootEle);
-        if (keyList != null && keyList.size() != 0) {
+        if (keyMapList != null && keyMapList.size() != 0) {
             rootEle.addText("\r\n\t");
             addUpdateElement(rootEle);
             rootEle.addText("\r\n\t");
@@ -187,40 +190,45 @@ public class MybatisCodeGenerator {
         }
 
         StringBuffer dao = new StringBuffer("package " + getServicePackage() + ";" + "\r\r");
-        // dao.append("import org.springframework.stereotype.Repository;").append("\r");
+        // mapper.append("import org.springframework.stereotype.Repository;").append("\r");
         dao.append(getPojoType("LIST_IMPORT")).append("\r");
-        // dao.append(getPojoType("MAP_IMPORT")).append("\r\r");
+        // mapper.append(getPojoType("MAP_IMPORT")).append("\r\r");
         dao.append("import " + getBeanPackage() + "." + objectName + "Vo;").append("\r\r\n"); // 导入bean类
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy/M/dd");
         dao.append("/**\r\n * " + tableComment + "Service接口\r\n * Created by " + MybatisCodeGenerator.class.getSimpleName() + " on " + sdf.format(new Date()) + "\r\n */\r\n");
         dao.append("public interface I" + objectName + "Service{\r\r\n");
 
+        dao.append("\t").append("/**").append("\r\t*获取单条\r").append("\t*/").append("\r");
+        dao.append("\t")
+                .append(objectName + "Vo " + "get(" + keyMapList.get(0).get("type")
+                        + " " + keyMapList.get(0).get("name") + ");").append("\r\r\n");
+
         dao.append("\t").append("/**").append("\r\t*获取列表\r").append("\t*/").append("\r");
         dao.append("\t")
-                .append("List<" + objectName + "Vo> query" + objectName + "List(" + objectName + "Vo "
+                .append("List<" + objectName + "Vo> " + "list(" + objectName + "Vo "
                         + columnToPropertyName(objectName) + ");").append("\r\r\n");
         dao.append("\t").append("/**").append("\r\t*获取总数\r").append("\t*/").append("\r");
         dao.append("\t")
-                .append("int query" + objectName + "Count(" + objectName + "Vo "
+                .append("int " + "count(" + objectName + "Vo "
                         + columnToPropertyName(objectName) + ");").append("\r\r\n");
         dao.append("\t").append("/**").append("\r\t*添加\r").append("\t*/").append("\r");
         dao.append("\t")
-                .append("Integer insert" + objectName + "(" + objectName + "Vo "
+                .append("Integer insert" + "(" + objectName + "Vo "
                         + columnToPropertyName(objectName) + ");").append("\r\r\n");
-        if (keyList.size() > 0) {
+        if (keyMapList.size() > 0) {
             dao.append("\t").append("/**").append("\r\t*修改\r").append("\t*/").append("\r");
             dao.append("\t")
-                    .append("Integer update" + objectName + "(" + objectName + "Vo "
+                    .append("Integer update" + "(" + objectName + "Vo "
                             + columnToPropertyName(objectName) + ");").append("\r\r\n");
-//            dao.append("\t").append("/**").append("\r\t*删除\r").append("\t*/").append("\r");
+//            mapper.append("\t").append("/**").append("\r\t*删除\r").append("\t*/").append("\r");
 //            if (keyList.size() == 1) {
-//                dao.append("\t")
+//                mapper.append("\t")
 //                        .append("Integer delete" + objectName + "By"
 //                                + upperFirestChar(columnToPropertyName(keyList.get(0))) + "("
 //                                + getPojoType(getDataTypeByColumnName(keyList.get(0))) + " "
 //                                + columnToPropertyName(keyList.get(0)) + ");").append("\r\n");
 //            } else {
-//                dao.append("\t")
+//                mapper.append("\t")
 //                        .append("Integer delete" + objectName + "(" + objectName + " "
 //                                + columnToPropertyName(objectName) + ");").append("\r\n");
 //            }
@@ -243,9 +251,9 @@ public class MybatisCodeGenerator {
         }
 
         StringBuffer dao = new StringBuffer("package " + getServicePackage() + ".impl;" + "\r\r");
-        // dao.append("import org.springframework.stereotype.Repository;").append("\r");
+        // mapper.append("import org.springframework.stereotype.Repository;").append("\r");
         dao.append(getPojoType("LIST_IMPORT")).append("\r");
-        // dao.append(getPojoType("MAP_IMPORT")).append("\r\r");
+        // mapper.append(getPojoType("MAP_IMPORT")).append("\r\r");
         dao.append("import " + getServicePackage() + ".I" + objectName + "Service;").append("\r\n"); // 导入bean类
         dao.append("import " + getBeanPackage() + "." + objectName + "Vo;").append("\r\r\n"); // 导入bean类
         dao.append("import " + getDAOPackage() + "." + objectName + "Mapper;").append("\r\r\n"); // 导入bean类
@@ -262,45 +270,54 @@ public class MybatisCodeGenerator {
         dao.append("\t").append("private " + objectName + "Mapper " + columnToPropertyName(objectName) + "Mapper;")
                 .append("\r\r\n");
 
+        // ------------------------------单条start---------------------------------
+        dao.append("\t").append("/**").append("\r\t*获取列表\r").append("\t*/").append("\r");
+        dao.append("\t")
+                .append("public " + objectName + "Vo " + "get(" + keyMapList.get(0).get("type") + " "
+                        + keyMapList.get(0).get("name") + "){\r\t\t return " + columnToPropertyName(objectName)
+                        + "Mapper.get(" + keyMapList.get(0).get("name") + ");\r\t}")
+                .append("\r\r\n");
+        // ------------------------------单条end---------------------------------
+
         // ------------------------------列表start---------------------------------
         dao.append("\t").append("/**").append("\r\t*获取列表\r").append("\t*/").append("\r");
         dao.append("\t")
-                .append("public List<" + objectName + "Vo> query" + objectName + "List(" + objectName + "Vo "
+                .append("public List<" + objectName + "Vo> " + "list(" + objectName + "Vo "
                         + columnToPropertyName(objectName) + "){\r\t\t return " + columnToPropertyName(objectName)
-                        + "Mapper.query" + objectName + "List(" + columnToPropertyName(objectName) + ");\r\t}")
+                        + "Mapper.list(" + columnToPropertyName(objectName) + ");\r\t}")
                 .append("\r\r\n");
         // ------------------------------列表end---------------------------------
         // ------------------------------总数start---------------------------------
         dao.append("\t").append("/**").append("\r\t*获取总数\r").append("\t*/").append("\r");
         dao.append("\t")
-                .append("public int query" + objectName + "Count(" + objectName + "Vo "
+                .append("public int " + "count(" + objectName + "Vo "
                         + columnToPropertyName(objectName) + "){\r\t\t return " + columnToPropertyName(objectName)
-                        + "Mapper.query" + objectName + "Count(" + columnToPropertyName(objectName) + ");\r\t}")
+                        + "Mapper.count(" + columnToPropertyName(objectName) + ");\r\t}")
                 .append("\r\r\n");
         // ------------------------------总数end---------------------------------
 
         // ------------------------------添加start---------------------------------
         dao.append("\t").append("/**").append("\r\t*添加\r").append("\t*/").append("\r");
         dao.append("\t")
-                .append("public Integer insert" + objectName + "(" + objectName + "Vo "
+                .append("public Integer insert" + "(" + objectName + "Vo "
                         + columnToPropertyName(objectName) + "){\r\t\t return " + columnToPropertyName(objectName)
-                        + "Mapper.insert" + objectName + "(" + columnToPropertyName(objectName) + ");\r\t}")
+                        + "Mapper.insert(" + columnToPropertyName(objectName) + ");\r\t}")
                 .append("\r\r\n");
         // ------------------------------添加end---------------------------------
 
-        if (keyList.size() > 0) {
+        if (keyMapList.size() > 0) {
             // ------------------------------修改start---------------------------------
             dao.append("\t").append("/**").append("\r\t*修改\r").append("\t*/").append("\r");
             dao.append("\t")
-                    .append("public Integer update" + objectName + "(" + objectName + "Vo "
+                    .append("public Integer update" + "(" + objectName + "Vo "
                             + columnToPropertyName(objectName) + "){\r\t\t return " + columnToPropertyName(objectName)
-                            + "Mapper.update" + objectName + "(" + columnToPropertyName(objectName) + ");\r\t}")
+                            + "Mapper.update(" + columnToPropertyName(objectName) + ");\r\t}")
                     .append("\r\r\n");
             // ------------------------------修改end---------------------------------
 
-//            dao.append("\t").append("/**").append("\r\t*删除\r").append("\t*/").append("\r");
+//            mapper.append("\t").append("/**").append("\r\t*删除\r").append("\t*/").append("\r");
 //            if (keyList.size() == 1) {
-//                dao.append("\t")
+//                mapper.append("\t")
 //                        .append("public Integer delete" + objectName + "By"
 //                                + upperFirestChar(columnToPropertyName(keyList.get(0))) + "("
 //                                + getPojoType(getDataTypeByColumnName(keyList.get(0))) + " "
@@ -309,7 +326,7 @@ public class MybatisCodeGenerator {
 //                                + upperFirestChar(columnToPropertyName(keyList.get(0))) + "("
 //                                + columnToPropertyName(keyList.get(0)) + ");\r\t};").append("\r\n");
 //            } else {
-//                dao.append("\t")
+//                mapper.append("\t")
 //                        .append("public Integer delete" + objectName + "(" + objectName + " "
 //                                + columnToPropertyName(objectName) + "){};").append("\r\n");
 //            }
@@ -320,7 +337,7 @@ public class MybatisCodeGenerator {
     }
 
     /**
-     * 生成 dao 文件内容
+     * 生成 mapper 文件内容
      */
     public static void geneDAO() {
         System.out.println("生成Mapper");
@@ -331,40 +348,45 @@ public class MybatisCodeGenerator {
         }
 
         StringBuffer dao = new StringBuffer("package " + getDAOPackage() + ";" + "\r\r");
-        // dao.append("import org.springframework.stereotype.Repository;").append("\r");
+        // mapper.append("import org.springframework.stereotype.Repository;").append("\r");
         dao.append(getPojoType("LIST_IMPORT")).append("\r");
-        // dao.append(getPojoType("MAP_IMPORT")).append("\r\r");
+        // mapper.append(getPojoType("MAP_IMPORT")).append("\r\r");
         dao.append("import " + getBeanPackage() + "." + objectName + "Vo;").append("\r\r\n"); // 导入bean类
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy/M/dd");
         dao.append("/**\r\n * " + tableComment + "Mapper接口\r\n * Created by " + MybatisCodeGenerator.class.getSimpleName() + " on " + sdf.format(new Date()) + "\r\n */\r\n");
         dao.append("public interface " + objectName + "Mapper{\r\r\n");
 
+        dao.append("\t").append("/**").append("\r\t*获取单条\r").append("\t*/").append("\r");
+        dao.append("\t")
+                .append(objectName + "Vo " + "get(" + keyMapList.get(0).get("type") + " "
+                        + keyMapList.get(0).get("name") + ");").append("\r\r\n");
+
         dao.append("\t").append("/**").append("\r\t*获取列表\r").append("\t*/").append("\r");
         dao.append("\t")
-                .append("List<" + objectName + "Vo> query" + objectName + "List(" + objectName + "Vo "
+                .append("List<" + objectName + "Vo> " + "list(" + objectName + "Vo "
                         + columnToPropertyName(objectName) + ");").append("\r\r\n");
         dao.append("\t").append("/**").append("\r\t*获取总数\r").append("\t*/").append("\r");
         dao.append("\t")
-                .append("int query" + objectName + "Count(" + objectName + "Vo "
+                .append("int " + "count(" + objectName + "Vo "
                         + columnToPropertyName(objectName) + ");").append("\r\r\n");
         dao.append("\t").append("/**").append("\r\t*添加\r").append("\t*/").append("\r");
         dao.append("\t")
-                .append("Integer insert" + objectName + "(" + objectName + "Vo "
+                .append("Integer insert" + "(" + objectName + "Vo "
                         + columnToPropertyName(objectName) + ");").append("\r\r\n");
-        if (keyList.size() > 0) {
+        if (keyMapList.size() > 0) {
             dao.append("\t").append("/**").append("\r\t*修改\r").append("\t*/").append("\r");
             dao.append("\t")
-                    .append("Integer update" + objectName + "(" + objectName + "Vo "
+                    .append("Integer update" + "(" + objectName + "Vo "
                             + columnToPropertyName(objectName) + ");").append("\r\r\n");
-//            dao.append("\t").append("/**").append("\r\t*删除\r").append("\t*/").append("\r");
+//            mapper.append("\t").append("/**").append("\r\t*删除\r").append("\t*/").append("\r");
 //            if (keyList.size() == 1) {
-//                dao.append("\t")
+//                mapper.append("\t")
 //                        .append("Integer delete" + objectName + "By"
 //                                + upperFirestChar(columnToPropertyName(keyList.get(0))) + "("
 //                                + getPojoType(getDataTypeByColumnName(keyList.get(0))) + " "
 //                                + columnToPropertyName(keyList.get(0)) + ");").append("\r\n");
 //            } else {
-//                dao.append("\t")
+//                mapper.append("\t")
 //                        .append("Integer delete" + objectName + "(" + objectName + " "
 //                                + columnToPropertyName(objectName) + ");").append("\r\n");
 //            }
@@ -400,10 +422,38 @@ public class MybatisCodeGenerator {
     /**
      * 生成mbt select内容
      */
+    public static void addSingleSelectElement(Element rootEle) {
+        rootEle.addComment("获取单条");
+        Element resultMap = rootEle.addElement("select");
+        resultMap.addAttribute("id", "get");
+        resultMap.addAttribute("parameterType", keyMapList.get(0).get("type"));
+//		resultMap.addAttribute("resultMap", columnToPropertyName(objectName) + "_resultMap");
+        resultMap.addAttribute("resultType", getBeanPackage() + "." + objectName + "Vo");
+
+        String colnums = "";
+        ResultSetMetaData rsmd = getResultSetMetaData(sql);
+        try {
+            for (int j = 1; j <= rsmd.getColumnCount(); j++) {
+                String columnName = rsmd.getColumnName(j); // 字段名
+                colnums = colnums + columnName + ",";
+            }
+            colnums = colnums.substring(0, colnums.length() - 1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        resultMap.addText("\r\t\t").
+                addText("SELECT " + colnums + " FROM " + table + " WHERE " + keyMapList.get(0).get("name") + "=#{0}")
+                .addText("\r\n\t");
+        rootEle.addText("\r");
+    }
+
+    /**
+     * 生成mbt select内容
+     */
     public static void addSelectElement(Element rootEle) {
         rootEle.addComment("获取列表");
         Element resultMap = rootEle.addElement("select");
-        resultMap.addAttribute("id", "query" + objectName + "List");
+        resultMap.addAttribute("id", "list");
         resultMap.addAttribute("parameterType", getBeanPackage() + "." + objectName + "Vo");
 //		resultMap.addAttribute("resultMap", columnToPropertyName(objectName) + "_resultMap");
         resultMap.addAttribute("resultType", getBeanPackage() + "." + objectName + "Vo");
@@ -419,8 +469,13 @@ public class MybatisCodeGenerator {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-        resultMap.addText("\r\t\t").addText("SELECT " + colnums + " FROM " + table).addText("\r\n\t");
+        resultMap.addText("\r\t\t").addText("SELECT " + colnums + " FROM " + table);
+//                .addText("");
+        Element offsetLimit = resultMap.addElement("if");
+        offsetLimit.addAttribute("test", "offset !=null and limit !=null")
+                .addText("\r\n\t\t\t")
+                .addText("LIMIT #{offset},#{limit}")
+                .addText("\r\n\t\t");
     }
 
     /**
@@ -429,7 +484,7 @@ public class MybatisCodeGenerator {
     public static void addSelectCountElement(Element rootEle) {
         rootEle.addComment("获取总数");
         Element resultMap = rootEle.addElement("select");
-        resultMap.addAttribute("id", "query" + objectName + "Count");
+        resultMap.addAttribute("id", "count");
         resultMap.addAttribute("parameterType", getBeanPackage() + "." + objectName + "Vo");
         resultMap.addAttribute("resultType", "java.lang.Integer");
         resultMap.addText("\r\t\t").addText("SELECT COUNT(1) FROM " + table).addText("\r\n\t");
@@ -441,11 +496,11 @@ public class MybatisCodeGenerator {
     public static void addInsertElement(Element rootEle) {
         rootEle.addComment("添加");
         Element resultMap = rootEle.addElement("insert");
-        resultMap.addAttribute("id", "insert" + objectName);
+        resultMap.addAttribute("id", "insert");
         resultMap.addAttribute("parameterType", getBeanPackage() + "." + objectName + "Vo").addText("\r\t");
-        if (keyList.size() > 0) {
+        if (keyMapList.size() > 0) {
             resultMap.addAttribute("useGeneratedKeys", "true");
-            resultMap.addAttribute("keyProperty", keyList.get(0));
+            resultMap.addAttribute("keyProperty", keyMapList.get(0).get("name"));
         }
         resultMap.addText(genMybatisInsertSQL());
     }
@@ -456,14 +511,14 @@ public class MybatisCodeGenerator {
     public static void addUpdateElement(Element rootEle) {
         rootEle.addComment("修改");
         Element resultMap = rootEle.addElement("update");
-        resultMap.addAttribute("id", "update" + objectName);
+        resultMap.addAttribute("id", "update");
         resultMap.addAttribute("parameterType", getBeanPackage() + "." + objectName + "Vo");
         resultMap.addText("\r\t\tUPDATE " + table);
         addUpdateSetElement(resultMap);
         resultMap.addText("\r").addText("\t\tWHERE ");
         StringBuffer updateById = new StringBuffer();
-        for (String string : keyList) {
-            updateById.append(string).append(" = #{" + columnToPropertyName(string) + "} and ");
+        for (Map<String, String> map : keyMapList) {
+            updateById.append(map.get("name")).append(" = #{" + columnToPropertyName(map.get("name")) + "} and ");
         }
         updateById.delete(updateById.length() - 4, updateById.length());
         resultMap.addText(updateById.toString());
@@ -497,18 +552,18 @@ public class MybatisCodeGenerator {
     public static void addDeleteElement(Element rootEle) {
 
         Element resultMap = rootEle.addElement("delete");
-        if (keyList.size() == 1) {
+        if (keyMapList.size() == 1) {
             resultMap.addAttribute("id",
-                    "delete" + objectName + "By" + upperFirestChar(columnToPropertyName(keyList.get(0))));
+                    "delete" + objectName + "By" + upperFirestChar(columnToPropertyName(keyMapList.get(0).get("name"))));
             resultMap.addText("\r\t\t")
-                    .addText("DELETE FROM " + table + " WHERE " + keyList.get(0) + " = #{" + keyList.get(0) + "}")
+                    .addText("DELETE FROM " + table + " WHERE " + keyMapList.get(0).get("name") + " = #{" + keyMapList.get(0).get("name") + "}")
                     .addText("\r\t");
         } else {
             resultMap.addAttribute("id", "delete" + objectName);
             resultMap.addAttribute("parameterType", upperFirestChar(objectName));
             StringBuffer delById = new StringBuffer();
-            for (String string : keyList) {
-                delById.append(string).append(" = #{" + columnToPropertyName(string) + "} and ");
+            for (Map<String, String> map : keyMapList) {
+                delById.append(map.get("name")).append(" = #{" + columnToPropertyName(map.get("name")) + "} and ");
             }
             delById.delete(delById.length() - 4, delById.length());
             resultMap.addText("\r\t\t").addText("DELETE FROM " + table + " WHERE " + delById).addText("\r\t");
@@ -708,7 +763,7 @@ public class MybatisCodeGenerator {
         try {
             ResultSetMetaData rsmd = getResultSetMetaData(sql);
             for (int j = 1; j <= rsmd.getColumnCount(); j++) {
-                if (keyList.size() > 0 && j == 1) continue;
+                if (keyMapList.size() > 0 && j == 1) continue;
                 String columnName = rsmd.getColumnName(j); // 字段名
                 sb.append("\t\t" + columnName);
                 if (j != rsmd.getColumnCount()) {
@@ -717,7 +772,7 @@ public class MybatisCodeGenerator {
             }
             sb.append("\r\t\t)VALUES(\r");
             for (int j = 1; j <= rsmd.getColumnCount(); j++) {
-                if (keyList.size() > 0 && j == 1) continue;
+                if (keyMapList.size() > 0 && j == 1) continue;
                 String columnName = rsmd.getColumnName(j); // 字段名
                 sb.append("\t\t#{" + columnToPropertyName(columnName) + "}");
                 if (j != rsmd.getColumnCount()) {
@@ -750,11 +805,32 @@ public class MybatisCodeGenerator {
     }
 
     /**
+     * 获取该表的主键
+     */
+    public static List<Map<String, String>> getKeyMapList() {
+        List<Map<String, String>> keyList = new ArrayList();
+        Connection conn = getConn();
+        PreparedStatement commentPsmt = getPreparedStatement(conn, keySQL);
+        try {
+            ResultSet commentRs = commentPsmt.executeQuery();
+            while (commentRs.next()) {
+                Map<String, String> m = new HashMap<>();
+                m.put("type", map.get(commentRs.getString("DATA_TYPE")));
+                m.put("name", commentRs.getString("COLUMN_NAME"));
+                keyList.add(m);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return keyList;
+    }
+
+    /**
      * 是否主键
      */
     public static Boolean isKey(String columnName) {
-        for (String string : keyList) {
-            if (columnName.equals(string)) {
+        for (Map<String, String> map : keyMapList) {
+            if (columnName.equals(map.get("name"))) {
                 return true;
             }
         }
