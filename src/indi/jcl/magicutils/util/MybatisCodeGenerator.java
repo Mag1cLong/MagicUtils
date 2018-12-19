@@ -68,15 +68,14 @@ public class MybatisCodeGenerator {
     }
 
     public static void main(String[] args) throws Exception {
-        System.out.println(Thread.currentThread().getContextClassLoader().getResource(".").getPath() );
-//        System.out.println("------代码生成开始------");
-//        System.out.println("源码路径：" + project_url);
-//        System.out.println("主键：" + keyMapList);
-//        geneMbtXml();
-//        geneBean();
-//        geneDAO();
-//        geneService();
-//        System.out.println("------代码生成结束------");
+        System.out.println("------代码生成开始------");
+        System.out.println("源码路径：" + project_url);
+        System.out.println("主键：" + keyMapList);
+        geneMbtXml();
+        geneBean();
+        geneDAO();
+        geneService();
+        System.out.println("------代码生成结束------");
     }
 
     public static String getProjectName() {
