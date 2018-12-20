@@ -44,7 +44,6 @@ public class MybatisCodeGenerator {
     private static String tableComment = getTableComment();
 
 
-
     private static Map<String, String> map; // 数据库对应的bean类型
 
     static {
@@ -457,13 +456,14 @@ public class MybatisCodeGenerator {
         Element resultMap = rootEle.addElement("sql");
         resultMap.addAttribute("id", "where");
         resultMap.addText("\r\n\t\tFROM " + table);
+        Element where = resultMap.addElement("where");
         ResultSetMetaData rsmd = getResultSetMetaData(sql);
         try {
             for (int j = 1; j <= rsmd.getColumnCount(); j++) {
                 String columnName = rsmd.getColumnName(j); // 字段名
-                Element condition = resultMap.addElement("if");
+                Element condition = where.addElement("if");
                 condition.addAttribute("test", columnName + "!=null and " + columnName + "!=''");
-                condition.addText("\r\n\t\t\tAND " + columnName + "=#{" + columnName + "}\r\n\t\t");
+                condition.addText("\r\n\t\t\t\tAND " + columnName + "=#{" + columnName + "}\r\n\t\t\t");
             }
             rootEle.addText("\r\n\t");
         } catch (SQLException e) {
