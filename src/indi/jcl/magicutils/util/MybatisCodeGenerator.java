@@ -618,6 +618,7 @@ public class MybatisCodeGenerator {
                     finalPropertyName = finalPropertyName + temp;
                 }
             }
+            finalPropertyName = finalPropertyName.replaceFirst(String.valueOf(finalPropertyName.charAt(0)),String.valueOf(finalPropertyName.charAt(0)).toLowerCase());
             return finalPropertyName;
         }
         return "";
