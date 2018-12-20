@@ -1,4 +1,4 @@
-package indi.jcl.magicutils.util;
+package com.centerm.robotscheduler;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
@@ -42,6 +42,7 @@ public class MybatisCodeGenerator {
             + "' AND COLUMN_KEY='PRI'";
     private static List<Map<String, String>> keyMapList; // 主键列表,下面多次用到
     private static String tableComment = getTableComment();
+
 
 
     private static Map<String, String> map; // 数据库对应的bean类型
@@ -99,6 +100,7 @@ public class MybatisCodeGenerator {
 //		addResultMapElement(rootEle); // 添加 resultMap
         rootEle.addText("\r\n\t");
         addSingleSelectElement(rootEle);
+        addWhereElement(rootEle);
         addSelectElement(rootEle);
         rootEle.addText("\r\n\t");
         addSelectCountElement(rootEle);
@@ -441,9 +443,31 @@ public class MybatisCodeGenerator {
             e.printStackTrace();
         }
         resultMap.addText("\r\t\t").
-                addText("SELECT " + colnums + " FROM " + table + " WHERE " + keyMapList.get(0).get("name") + "=#{"+keyMapList.get(0).get("name")+"}")
+                addText("SELECT " + colnums + " FROM " + table + " WHERE " + keyMapList.get(0).get("name") + "=#{" + keyMapList.get(0).get("name") + "}")
                 .addText("\r\n\t");
         rootEle.addText("\r");
+    }
+
+    /**
+     * 生成mbt select内容
+     */
+    public static void addWhereElement(Element rootEle) {
+        rootEle.addComment("查询条件");
+        Element resultMap = rootEle.addElement("sql");
+        resultMap.addAttribute("id", "where");
+        resultMap.addText("\r\n\t\tFROM " + table);
+        ResultSetMetaData rsmd = getResultSetMetaData(sql);
+        try {
+            for (int j = 1; j <= rsmd.getColumnCount(); j++) {
+                String columnName = rsmd.getColumnName(j); // 字段名
+                Element condition = resultMap.addElement("if");
+                condition.addAttribute("test", columnName + "!=null and " + columnName + "!=''");
+                condition.addText("\r\n\t\t\tAND " + columnName + "=#{" + columnName + "}\r\n\t\t");
+            }
+            rootEle.addText("\r\n\t");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -468,8 +492,10 @@ public class MybatisCodeGenerator {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        resultMap.addText("\r\t\t").addText("SELECT " + colnums + " FROM " + table);
+        resultMap.addText("\r\t\t").addText("SELECT " + colnums);
 //                .addText("");
+        Element include = resultMap.addElement("include");
+        include.addAttribute("refid", "where");
         Element offsetLimit = resultMap.addElement("if");
         offsetLimit.addAttribute("test", "offset !=null and limit !=null")
                 .addText("\r\n\t\t\t")
@@ -486,7 +512,9 @@ public class MybatisCodeGenerator {
         resultMap.addAttribute("id", "count");
         resultMap.addAttribute("parameterType", getBeanPackage() + "." + objectName + "Vo");
         resultMap.addAttribute("resultType", "java.lang.Integer");
-        resultMap.addText("\r\t\t").addText("SELECT COUNT(1) FROM " + table).addText("\r\n\t");
+        resultMap.addText("\r\t\t").addText("SELECT COUNT(1)");
+        Element include = resultMap.addElement("include");
+        include.addAttribute("refid", "where");
     }
 
     /**
@@ -618,7 +646,7 @@ public class MybatisCodeGenerator {
                     finalPropertyName = finalPropertyName + temp;
                 }
             }
-            finalPropertyName = finalPropertyName.replaceFirst(String.valueOf(finalPropertyName.charAt(0)),String.valueOf(finalPropertyName.charAt(0)).toLowerCase());
+            finalPropertyName = finalPropertyName.replaceFirst(String.valueOf(finalPropertyName.charAt(0)), String.valueOf(finalPropertyName.charAt(0)).toLowerCase());
             return finalPropertyName;
         }
         return "";
