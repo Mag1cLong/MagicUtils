@@ -1,4 +1,4 @@
-package com.centerm.robotscheduler;
+package indi.jcl.magicutils.util;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
