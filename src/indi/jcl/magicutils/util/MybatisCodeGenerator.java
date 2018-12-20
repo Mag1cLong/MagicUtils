@@ -441,7 +441,7 @@ public class MybatisCodeGenerator {
             e.printStackTrace();
         }
         resultMap.addText("\r\t\t").
-                addText("SELECT " + colnums + " FROM " + table + " WHERE " + keyMapList.get(0).get("name") + "=#{0}")
+                addText("SELECT " + colnums + " FROM " + table + " WHERE " + keyMapList.get(0).get("name") + "=#{"+keyMapList.get(0).get("name")+"}")
                 .addText("\r\n\t");
         rootEle.addText("\r");
     }
