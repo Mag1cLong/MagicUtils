@@ -61,6 +61,7 @@ public class MybatisCodeGenerator {
         map.put("TIMESTAMP", "String");
         map.put("CHAR", "String");
         map.put("DATETIME", "String");
+        map.put("TIME", "String");
         map.put("LIST_IMPORT", "import java.util.List;");
         map.put("MAP_IMPORT", "import java.util.Map;");
         map.put("longtext", "String");
